@@ -1,205 +1,160 @@
-import { useRef, useState } from "react";
-import { Upload, FileText, X } from "lucide-react";
-import { DEMO_CONTRACT } from "../constants/prompts";
+import React, { useState } from "react";
 
-// Read text from TXT / MD files
-function readAsText(file) {
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = e => res(e.target.result);
-    reader.onerror = () => rej(new Error("Could not read file"));
-    reader.readAsText(file);
-  });
-}
+function ContractUpload({ onSubmit, isLoading, statusText }) {
+  const [contractText, setContractText] = useState("");
+  const [activeTab, setActiveTab] = useState("single"); // For handling future tab tracking cleanly
 
-// Extract text from PDF using pdf.js CDN
-async function readPDF(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdfjsLib = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let text = "";
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map(item => item.str).join(" ") + "\n";
-  }
-  return text;
-}
-
-export default function ContractUpload({ text, setText, compareText, setCompareText, compareMode, setCompareMode }) {
-  const fileRef = useRef();
-  const compareFileRef = useRef();
-  const [fileName, setFileName] = useState("");
-  const [compareFileName, setCompareFileName] = useState("");
-  const [fileError, setFileError] = useState("");
-
-  const handleFile = async (e, isCompare = false) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setFileError("");
-
-    try {
-      let content = "";
-      if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-        content = await readPDF(file);
-      } else {
-        content = await readAsText(file);
-      }
-
-      if (isCompare) {
-        setCompareText(content);
-        setCompareFileName(file.name);
-      } else {
-        setText(content);
-        setFileName(file.name);
-      }
-    } catch (err) {
-      setFileError("Could not read file. Try pasting text instead.");
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(contractText);
   };
 
-  const cardStyle = {
-    background: "rgba(255,255,255,0.07)",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    border: "1px solid rgba(255,255,255,0.15)",
-  };
-
-  const textareaStyle = {
-    width: "100%",
-    minHeight: 160,
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.15)",
-    borderRadius: 10,
-    padding: 14,
-    color: "#e0e0e0",
-    fontSize: 13,
-    resize: "vertical",
-    outline: "none",
-    boxSizing: "border-box",
-    fontFamily: "monospace",
+  const handleLoadDemo = () => {
+    const demoContract = `Section 5. Exclusivity and Intellectual Property Assignment
+5.1 Exclusivity: The Creator agrees that during the term of this Agreement and for a period of twenty-four (24) months following its termination, the Creator shall not create, post, or publish any content for, or endorse, any brand, product, or service operating within the beauty, wellness, lifestyle, or consumer goods sectors globally.
+5.2 Rights Granted: The Creator hereby grants the Brand a perpetual, irrevocable, sublicensable, royalty-free, worldwide license to use, edit, modify, alter, and monetize the Creator's name, image, likeness, voice, and uploaded content across any media channel currently existing or developed in the future, without any requirement for further compensation or approval.`;
+    setContractText(demoContract);
   };
 
   return (
-    <div>
-      {/* Compare mode toggle */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center" }}>
+    <div className="upload-section-wrapper" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      {/* Tab Selectors */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "0.5rem" }}>
         <button
-          onClick={() => setCompareMode(false)}
+          type="button"
+          onClick={() => setActiveTab("single")}
           style={{
-            padding: "7px 18px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
-            background: !compareMode ? "linear-gradient(135deg,#4fc3f7,#7c4dff)" : "rgba(255,255,255,0.1)",
+            padding: "10px 20px",
+            background: activeTab === "single" ? "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" : "#1e293b",
             color: "#fff",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "600",
+            cursor: "pointer"
           }}
         >
           📄 Single Contract
         </button>
         <button
-          onClick={() => setCompareMode(true)}
+          type="button"
+          onClick={() => setActiveTab("compare")}
           style={{
-            padding: "7px 18px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
-            background: compareMode ? "linear-gradient(135deg,#4fc3f7,#7c4dff)" : "rgba(255,255,255,0.1)",
-            color: "#fff",
+            padding: "10px 20px",
+            background: activeTab === "compare" ? "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" : "#1e293b",
+            color: "#94a3b8",
+            border: "1px solid #334155",
+            borderRadius: "8px",
+            fontWeight: "600",
+            cursor: "not-allowed"
           }}
+          disabled
         >
           ⚖️ Compare Two Contracts
         </button>
       </div>
 
-      {/* Contract 1 */}
-      <div style={cardStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <label style={{ color: "#90caf9", fontSize: 13, fontWeight: 700 }}>
-            {compareMode ? "📄 Contract A" : "📄 Your Contract"}
-          </label>
-          <div style={{ display: "flex", gap: 8 }}>
+      {/* Core Form Card Container */}
+      <form onSubmit={handleSubmit} style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: "12px", padding: "1.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+          <span style={{ color: "#f8fafc", fontWeight: "600", fontSize: "0.95rem" }}>
+            📝 Your Contract Text
+          </span>
+          <div style={{ display: "flex", gap: "8px" }}>
             <button
-              onClick={() => { setText(DEMO_CONTRACT); setFileName("demo_contract.txt"); }}
-              style={{
-                background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: 8, padding: "6px 12px", color: "#ccc", cursor: "pointer", fontSize: 12,
-              }}
+              type="button"
+              onClick={handleLoadDemo}
+              style={{ padding: "6px 12px", background: "#334155", color: "#e2e8f0", border: "none", borderRadius: "6px", fontSize: "0.85rem", cursor: "pointer", fontWeight: "500" }}
             >
               Load Demo
             </button>
             <button
-              onClick={() => fileRef.current.click()}
-              style={{
-                background: "rgba(79,195,247,0.15)", border: "1px solid #4fc3f7",
-                borderRadius: 8, padding: "6px 12px", color: "#4fc3f7", cursor: "pointer", fontSize: 12,
-                display: "flex", alignItems: "center", gap: 4,
-              }}
+              type="button"
+              style={{ padding: "6px 12px", background: "rgba(56, 189, 248, 0.1)", color: "#38bdf8", border: "1px solid #38bdf8", borderRadius: "6px", fontSize: "0.85rem", cursor: "not-allowed" }}
+              disabled
             >
-              <Upload size={12} /> Upload PDF/TXT
+              📤 Upload PDF/TXT
             </button>
           </div>
         </div>
-        <input ref={fileRef} type="file" accept=".txt,.md,.pdf" onChange={e => handleFile(e, false)} style={{ display: "none" }} />
-        <textarea
-          value={text}
-          onChange={e => { setText(e.target.value); setFileName(""); }}
-          placeholder="Paste your contract here... or upload a PDF/TXT file above"
-          style={textareaStyle}
-        />
-        {fileName && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-            <FileText size={13} color="#4fc3f7" />
-            <span style={{ color: "#4fc3f7", fontSize: 12 }}>{fileName}</span>
-            <button onClick={() => { setText(""); setFileName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef5350", padding: 0, marginLeft: 4 }}>
-              <X size={13} />
-            </button>
-          </div>
-        )}
-        {text && !fileName && (
-          <p style={{ color: "#4caf50", fontSize: 12, margin: "6px 0 0" }}>
-            ✓ {text.length.toLocaleString()} characters loaded
-          </p>
-        )}
-        {fileError && <p style={{ color: "#ef5350", fontSize: 12, margin: "6px 0 0" }}>⚠️ {fileError}</p>}
-      </div>
 
-      {/* Contract 2 (compare mode only) */}
-      {compareMode && (
-        <div style={cardStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <label style={{ color: "#ce93d8", fontSize: 13, fontWeight: 700 }}>📄 Contract B</label>
-            <button
-              onClick={() => compareFileRef.current.click()}
-              style={{
-                background: "rgba(206,147,216,0.15)", border: "1px solid #ce93d8",
-                borderRadius: 8, padding: "6px 12px", color: "#ce93d8", cursor: "pointer", fontSize: 12,
-                display: "flex", alignItems: "center", gap: 4,
-              }}
-            >
-              <Upload size={12} /> Upload PDF/TXT
-            </button>
-          </div>
-          <input ref={compareFileRef} type="file" accept=".txt,.md,.pdf" onChange={e => handleFile(e, true)} style={{ display: "none" }} />
+        {/* 🔒 TEXTAREA BUGFIX: Height boundary configuration locks scroll layout internally */}
+        <div style={{ position: "relative", marginBottom: "1.5rem" }}>
           <textarea
-            value={compareText}
-            onChange={e => { setCompareText(e.target.value); setCompareFileName(""); }}
-            placeholder="Paste second contract here to compare..."
-            style={{ ...textareaStyle, borderColor: "rgba(206,147,216,0.3)" }}
+            value={contractText}
+            onChange={(e) => setContractText(e.target.value)}
+            placeholder="Paste your contract text lines here... or click 'Load Demo' above to populate instantly."
+            style={{
+              width: "100%",
+              height: "220px",           // Fixed explicit baseline height
+              maxHeight: "220px",        // Absolute limit barrier configuration
+              overflowY: "auto",         // Encapsulates scrolling internally
+              resize: "none",            // Disables drag adjustments from altering viewport
+              background: "#0f172a",
+              color: "#f8fafc",
+              padding: "1rem",
+              borderRadius: "8px",
+              border: "1px solid #475569",
+              fontSize: "0.95rem",
+              lineHeight: "1.5",
+              outline: "none",
+              boxSizing: "border-box"
+            }}
           />
-          {compareFileName && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-              <FileText size={13} color="#ce93d8" />
-              <span style={{ color: "#ce93d8", fontSize: 12 }}>{compareFileName}</span>
-              <button onClick={() => { setCompareText(""); setCompareFileName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef5350", padding: 0, marginLeft: 4 }}>
-                <X size={13} />
-              </button>
+          {contractText && (
+            <div style={{ position: "absolute", bottom: "10px", left: "12px", fontSize: "0.8rem", color: "#4ade80", fontWeight: "500" }}>
+              ✓ {contractText.length.toLocaleString()} characters staged
             </div>
           )}
-          {compareText && !compareFileName && (
-            <p style={{ color: "#4caf50", fontSize: 12, margin: "6px 0 0" }}>
-              ✓ {compareText.length.toLocaleString()} characters loaded
-            </p>
-          )}
         </div>
-      )}
+
+        {/* Action Dispatch Button Wrapper */}
+        <button
+          type="submit"
+          disabled={isLoading || !contractText.trim()}
+          style={{
+            width: "100%",
+            padding: "14px",
+            background: isLoading 
+              ? "#334155" 
+              : !contractText.trim() 
+                ? "rgba(99, 102, 241, 0.4)" 
+                : "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+            color: isLoading ? "#94a3b8" : "#ffffff",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "600",
+            fontSize: "1rem",
+            cursor: isLoading || !contractText.trim() ? "not-allowed" : "pointer",
+            transition: "all 0.2s ease",
+            boxShadow: !contractText.trim() ? "none" : "0 4px 12px rgba(79, 70, 229, 0.3)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "10px"
+          }}
+        >
+          {isLoading ? (
+            <>
+              <span className="spinner" style={{ display: "inline-block", width: "16px", height: "16px", border: "2px solid #94a3b8", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }}></span>
+              <span>{statusText || "Processing pipeline details..."}</span>
+            </>
+          ) : (
+            <>
+              <span>⚡</span>
+              <span>Analyze with LexGuard</span>
+            </>
+          )}
+        </button>
+      </form>
+      
+      {/* Spinning Keyframe Rule Injection Injection directly to support native component lifecycle */}
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
+
+export default ContractUpload;

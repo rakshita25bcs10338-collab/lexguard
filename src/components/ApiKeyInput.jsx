@@ -1,56 +1,61 @@
-import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import React, { useState } from "react";
 
-export default function ApiKeyInput({ apiKey, setApiKey }) {
-  const [show, setShow] = useState(false);
+function ApiKeyInput({ apiKey, onKeyChange }) {
+  const [showKey, setShowKey] = useState(false);
 
   return (
-    <div style={{
-      background: "rgba(255,255,255,0.07)",
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 20,
-      border: "1px solid rgba(255,255,255,0.15)",
-    }}>
-      <label style={{ color: "#90caf9", fontSize: 13, fontWeight: 700, display: "block", marginBottom: 8 }}>
-        🔑 Groq API Key <span style={{ color: "#4caf50", fontWeight: 400 }}>(Free — No Credit Card)</span>
+    <div className="api-key-container" style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: "12px", padding: "1.5rem", marginBottom: "2rem" }}>
+      <label style={{ display: "block", color: "#f8fafc", fontWeight: "600", marginBottom: "0.5rem", fontSize: "0.95rem" }}>
+        🔑 Google Gemini API Key
       </label>
-      <div style={{ position: "relative" }}>
+      
+      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
         <input
-          type={show ? "text" : "password"}
+          type={showKey ? "text" : "password"}
           value={apiKey}
-          onChange={e => setApiKey(e.target.value)}
-          placeholder="gsk_..."
+          onChange={(e) => onKeyChange(e.target.value)}
+          placeholder="AIzaSy..."
           style={{
             width: "100%",
-            background: "rgba(255,255,255,0.1)",
-            border: apiKey ? "1px solid #4fc3f7" : "1px solid rgba(255,255,255,0.2)",
-            borderRadius: 10,
-            padding: "10px 40px 10px 14px",
+            padding: "12px 45px 12px 16px",
+            background: "#0f172a",
+            border: "1px solid #475569",
+            borderRadius: "8px",
             color: "#fff",
-            fontSize: 14,
-            outline: "none",
-            boxSizing: "border-box",
-            transition: "border 0.2s",
+            fontSize: "0.95rem",
+            outline: "none"
           }}
         />
         <button
-          onClick={() => setShow(!show)}
+          type="button"
+          onClick={() => setShowKey(!showKey)}
           style={{
-            position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-            background: "none", border: "none", cursor: "pointer", color: "#90caf9", padding: 0,
+            position: "absolute",
+            right: "12px",
+            background: "none",
+            border: "none",
+            color: "#94a3b8",
+            cursor: "pointer",
+            fontSize: "1.1rem"
           }}
         >
-          {show ? <EyeOff size={16} /> : <Eye size={16} />}
+          {showKey ? "👁️" : "🙈"}
         </button>
       </div>
-      <p style={{ color: "#546e7a", fontSize: 12, margin: "8px 0 0" }}>
-        Get your free key at{" "}
-        <a href="https://console.groq.com" target="_blank" rel="noreferrer" style={{ color: "#90caf9" }}>
-          console.groq.com
-        </a>
-        {" "}→ API Keys → Create API Key. Your key never leaves your browser.
+      
+      <p style={{ margin: "8px 0 0 0", fontSize: "0.85rem", color: "#94a3b8" }}>
+        Get your native API key from the{" "}
+        <a 
+          href="https://aistudio.google.com/" 
+          target="_blank" 
+          rel="noreferrer"
+          style={{ color: "#38bdf8", textDecoration: "underline", fontWeight: "500" }}
+        >
+          Google AI Studio Console
+        </a>. Your key strictly processes inside your browser workspace.
       </p>
     </div>
   );
 }
+
+export default ApiKeyInput;
