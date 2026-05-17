@@ -1,7 +1,11 @@
 import { SYSTEM_PROMPT } from "../constants/prompts";
 
 export async function analyzeContract(apiKey, text, onStatus) {
-  onStatus("Reading your contract...");
+  if (!apiKey || apiKey.includes("YOUR_GROQ")) {
+    throw new Error("Invalid API Key. Please configure your Groq API Key.");
+  }
+
+  onStatus("Reading your contract layout...");
 
   const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -20,14 +24,18 @@ export async function analyzeContract(apiKey, text, onStatus) {
     }),
   });
 
-  onStatus("Identifying risks...");
+  onStatus("Extracting legal clauses & identifying risks...");
 
   const data = await resp.json();
-  if (!resp.ok) throw new Error(data.error?.message || "API error");
+  if (!resp.ok) throw new Error(data.error?.message || "Groq API compilation error");
 
-  const raw = data.choices[0].message.content
-    .trim().replace(/```json|```/g, "").trim();
+  let raw = data.choices[0].message.content.trim();
+  
+  // Clean markdown JSON wrappers cleanly if present
+  if (raw.startsWith("```")) {
+    raw = raw.replace(/```json|```/g, "").trim();
+  }
 
-  onStatus("Building your report...");
+  onStatus("Building your custom LexGuard risk report...");
   return JSON.parse(raw);
 }
