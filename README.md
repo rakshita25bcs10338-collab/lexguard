@@ -1,16 +1,30 @@
-# React + Vite
+# LexGuard 🛡️
+### AI Contract Intelligence System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+LexGuard analyzes legal contracts and identifies risky, unfair, or confusing clauses — explained in plain English that anyone from a 6-year-old to a 90-year-old can understand.
 
-Currently, two official plugins are available:
+## What it does
+- 📄 Upload or paste any contract (employment, rental, privacy policy, etc.)
+- 🔍 AI analyzes every clause for hidden risks
+- 🚨 Color-coded risk scoring (LOW → CRITICAL)
+- 💬 Plain English explanations — no legal degree needed
+- 💡 Negotiation tips and actionable suggestions
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
+- React + Vite
+- Google Gemini AI API
+- Lucide React Icons
+- Pure CSS (no UI library)
 
-## React Compiler
+## How to run
+```bash
+git clone https://github.com/rakshita25bcs10338-collab/lexguard.git
+cd lexguard
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Add your Gemini API key in the app and start analyzing contracts!
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Built for
+PromptWars Hackathon — Problem Statement 01: LexGuard AI Rights & Contract Intelligence System
