@@ -1,41 +1,49 @@
-import { SYSTEM_PROMPT } from "../constants/prompts";
-
-export async function analyzeContract(apiKey, text, onStatus) {
-  if (!apiKey || apiKey.includes("YOUR_GROQ")) {
-    throw new Error("Invalid API Key. Please configure your Groq API Key.");
+export const analyzeContract = async (contractText, apiKey) => {
+  if (!apiKey || !apiKey.trim()) {
+    throw new Error("Missing Gemini API Key.");
   }
 
-  onStatus("Reading your contract layout...");
+  // Automatically cleans up any whitespace or newline breaks from copying
+  const cleanKey = apiKey.trim().replace(/[\n\r\s]/g, "");
 
-  const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  // Hits the stable Gemini 1.5 Flash production endpoint safely
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanKey}`;
+
+  const requestBody = {
+    contents: [
+      {
+        parts: [
+          {
+            text: `You are a contract legal analyst engine. Review this text for risk flags and scoring metrics:\n\n"${contractText}"\n\nReturn your analysis response strictly following this JSON layout template without markdown wrappers:\n{\n  "riskScore": 75,\n  "riskLevel": "High",\n  "keyConcerns": ["Severe indemnity clauses", "Vague termination timelines"],\n  "recommendation": "Negotiate a fixed penalty cap instead of an open liability model."\n}`
+          }
+        ]
+      }
+    ],
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.2
+    }
+  };
+
+  const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `Analyze this contract:\n\n${text.slice(0, 15000)}` }
-      ],
-      temperature: 0.2,
-      max_tokens: 3000,
-    }),
+    body: JSON.stringify(requestBody)
   });
 
-  onStatus("Extracting legal clauses & identifying risks...");
-
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(data.error?.message || "Groq API compilation error");
-
-  let raw = data.choices[0].message.content.trim();
-  
-  // Clean markdown JSON wrappers cleanly if present
-  if (raw.startsWith("```")) {
-    raw = raw.replace(/```json|```/g, "").trim();
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData?.error?.message || "Analysis processing error.");
   }
 
-  onStatus("Building your custom LexGuard risk report...");
-  return JSON.parse(raw);
-}
+  const data = await response.json();
+  let textPayload = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+
+  if (textPayload.includes("```")) {
+    textPayload = textPayload.replace(/```json|```/g, "").trim();
+  }
+
+  return JSON.parse(textPayload);
+};
